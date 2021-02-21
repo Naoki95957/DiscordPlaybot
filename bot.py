@@ -1,14 +1,9 @@
-import asyncio
-from logging import raiseExceptions
 import os
 from os import path
-from typing import AnyStr
 from datetime import datetime, timedelta
 import discord
-import asyncio
 import pickle
 import copy
-from discord import client
 import pytz
 from message_manager import ReactiveMessage
 from dotenv import load_dotenv

@@ -1,6 +1,5 @@
 import discord
 import asyncio
-from dotenv import load_dotenv
 
 class ReactiveMessage:
     """
