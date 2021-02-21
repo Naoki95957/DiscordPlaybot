@@ -46,6 +46,18 @@ class PlayBot(discord.Client):
                 f'\nRoles in order: {guild.roles}'
             )
             self.roles.extend(guild.roles)
+        # Setting `Playing ` status
+        # await Playbot.change_presence(self, activity=discord.Game(name="a game"))
+
+        # # Setting `Streaming ` status
+        # await Playbot.change_presence(self, activity=discord.Streaming(name="My Stream", url=my_twitch_url))
+
+        # # Setting `Listening ` status
+        await PlayBot.change_presence(self, activity=discord.Activity(type=discord.ActivityType.listening, name="The beautiful sound of DSL"))
+
+        # # Setting `Watching ` status
+        # await Playbot.change_presence(self, activity=discord.Activity(type=discord.ActivityType.watching, name="a movie"))
+
 
     async def on_message(self, message: discord.message.Message):
         cont = str(message.content)
