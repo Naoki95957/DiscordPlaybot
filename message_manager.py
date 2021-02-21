@@ -20,10 +20,13 @@ class ReactiveMessage:
             access reactions to that message
             
             Args:
-                channel (discord.channel.TextChannel)
-                msg (str): [description]
-                reaction (str): [description]
-                delay (int): [description]
+                channel (discord.channel.TextChannel): text channel to msg in
+                msg (str): message string
+                reaction (str): single-char emoji string
+                success_msg (str): message string for success
+                failed_msg (str): message string for failure
+                delay (int): integer in seconds
+                threshold (int): integer that represents how many users are need to be successful
         """  
         self.msg = msg
         self.success = success_msg
