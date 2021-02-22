@@ -72,11 +72,18 @@ class ReactiveMessage:
             return
         for reaction in msg.reactions:
             if reaction.emoji == self.reaction and reaction.count >= self.threshold:
-                await msg.channel.send(self.success)
+                await self.send_success_msg()
                 return
         await msg.edit(embed=None, content=self.failed)
         self.passed = True
-        
+
+    async def send_success_msg(self):
+        mentions = discord.AllowedMentions(users=True, roles=True, replied_user=True)
+        await self.raw_msg.channel.send(
+            content=self.success,
+            allowed_mentions=mentions,
+            reference=self.raw_msg.to_reference())
+
     def get_success_msg(self) -> str:
         return self.success
 

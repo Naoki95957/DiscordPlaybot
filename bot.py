@@ -104,7 +104,7 @@ class PlayBot(discord.Client):
             else:
                 await message.channel.send("Sorry, you do not have permission <@" + str(message.author.id) + ">")
         elif cont.startswith(self.base_command + "permit "):
-            if message.author.id == self.my_id or message.author.top_role.id in self.permitted_roles:
+            if message.author.id == int(self.my_id) or message.author.top_role.id in self.permitted_roles:
                 try:
                     role_id = int(cont.replace(self.base_command + 'permit ', ''))
                     self.permitted_roles.append(role_id)
@@ -114,7 +114,7 @@ class PlayBot(discord.Client):
             else:
                 await message.channel.send("Sorry, you do not have permission <@" + str(message.author.id) + ">")
         elif cont.startswith(self.base_command + "remove "):
-            if message.author.id == self.my_id or message.author.top_role.id in self.permitted_roles:
+            if message.author.id == int(self.my_id) or message.author.top_role.id in self.permitted_roles:
                 try:
                     role_id = int(cont.replace(self.base_command + 'remove ', ''))
                     self.permitted_roles.pop(self.permitted_roles.index(role_id))
@@ -188,7 +188,7 @@ class PlayBot(discord.Client):
                     and user.id != self.bot_id
                     and rmsg.get_threshold() <= reaction.count
                 ):
-                await message.channel.send(rmsg.get_success_msg())
+                await rmsg.send_success_msg()
                 rmsg.passed_threshold()
                 self.running_msgs.pop(self.running_msgs.index(rmsg))
 
