@@ -1,6 +1,6 @@
 import os
 from os import path
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 import discord
 import pickle
 import copy
