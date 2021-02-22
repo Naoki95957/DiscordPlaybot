@@ -165,7 +165,7 @@ class PlayBot(discord.Client):
                             self.reaction_str, 
                             self.formated_success_str.format(self.pinging), 
                             self.formated_failed_str, 
-                            timedelta(hours=hrs, minutes=minutes).seconds, 
+                            int(timedelta(hours=hrs, minutes=minutes).total_seconds()), 
                             self.threshold
                         )
                     )
