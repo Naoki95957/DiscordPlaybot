@@ -1,13 +1,14 @@
 import os
 from os import path
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 import discord
 import pickle
 import copy
 import pytz
-from message_manager import ReactiveMessage
+import time
+from threading import Thread
+from message_manager import ReactiveMessage, reactive_message_builder, BOT_TIME_ZONE, STRFTIME_FORMAT
 from dotenv import load_dotenv
-
 
 class PlayBot(discord.Client):
 
@@ -34,10 +35,11 @@ class PlayBot(discord.Client):
         TOKEN = os.getenv('DISCORD_TOKEN')
         self.bot_id = os.getenv('BOT_ID')
         self.my_id = os.getenv('MY_ID')
-        self.try_loading()
+        Thread(target=self.__save_loop).start()
         self.run(TOKEN)
 
     async def on_ready(self):
+        self.try_loading()
         for guild in self.guilds:
             print(
                 f'{self.user} is connected to the following guilds:\n'
@@ -54,7 +56,6 @@ class PlayBot(discord.Client):
 
         # # Setting `Listening ` status
         await PlayBot.change_presence(self, activity=discord.Activity(type=discord.ActivityType.listening, name="The beautiful sound of DSL"))
-
         # # Setting `Watching ` status
         # await Playbot.change_presence(self, activity=discord.Activity(type=discord.ActivityType.watching, name="a movie"))
 
@@ -148,7 +149,7 @@ class PlayBot(discord.Client):
                     time_str = cont.split(' ')[1]
                     hrs = int(time_str.split(':')[0])
                     minutes = int(time_str.split(':')[1])
-                    now = datetime.now(tz=pytz.timezone("America/Los_Angeles"))
+                    now = datetime.now(tz=pytz.timezone(BOT_TIME_ZONE))
                     now = now + timedelta(hours=hrs, minutes=minutes)
 
                     embed_var = discord.Embed(title="Let's Play!", description=self.formated_prompt_str.format(hrs, minutes, self.threshold, self.reaction_str))
@@ -204,20 +205,32 @@ class PlayBot(discord.Client):
                 self.base_command = dictionary['base_command']
                 self.reaction_str = dictionary['reaction_str']
                 self.pinging = dictionary['pinging']
+                self.running_msgs = [reactive_message_builder(rmsg_dict, self.guilds) for rmsg_dict in dictionary['running_msgs']]
         except Exception as e:
             print("failed to load file :/")
+            print(e)
 
     def try_saving(self):
         """
         Helper that saves a file so that some previous commands can be loaded
         """
+        for rmsg in self.running_msgs:
+            if rmsg.is_complete():
+                self.running_msgs.pop(self.running_msgs.index(rmsg))
         dictionary = {}
         dictionary['permitted_roles'] = copy.deepcopy(self.permitted_roles)
         dictionary['threshold'] = copy.deepcopy(self.threshold)
         dictionary['base_command'] = copy.deepcopy(self.base_command)
         dictionary['reaction_str'] = copy.deepcopy(self.reaction_str)
         dictionary['pinging'] = copy.deepcopy(self.pinging)
+        rmsg_dicts = [rmsg.to_dictionary() for rmsg in self.running_msgs]
+        dictionary['running_msgs'] = copy.deepcopy(rmsg_dicts)
         pickle.dump(dictionary, open(self.file, 'wb'))
+
+    def __save_loop(self):
+        while True:
+            time.sleep(15)
+            self.try_saving()
 
     def get_role(self, id: int) -> discord.Role:
         """
@@ -233,7 +246,7 @@ class PlayBot(discord.Client):
             if role.id == id:
                 return role
         return None
-
+    
 def main():
     bot = PlayBot()
 
