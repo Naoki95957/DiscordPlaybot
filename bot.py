@@ -10,6 +10,9 @@ from threading import Thread
 from message_manager import ReactiveMessage, reactive_message_builder, BOT_TIME_ZONE, STRFTIME_FORMAT
 from dotenv import load_dotenv
 
+# day * hours * minutes * seconds
+MAX_EVENT_TIME = 14 * 24 * 60 * 60 # 604800s
+
 class PlayBot(discord.Client):
 
     bot_id = 1234567890
@@ -22,7 +25,7 @@ class PlayBot(discord.Client):
     threshold = 3
     pinging = "someone"
     base_command = "!play "
-    formated_prompt_str = "Who wants to join in and play in {0}hrs and {1}m?\nWe need {2} or more people to react with {3} to make it happen!\n\n"
+    formated_prompt_str = "Who wants to join in and play in {0} days, {1}hrs and {2}m?\nWe need {3} or more people to react with {4} to make it happen!\n\n"
     formated_success_str = "Yo, <@&{0}>! Let's get some games going!"
     formated_failed_str = "Sorry! Looks like we didn't get enough players for this time."
     reaction_str = "⚽"
@@ -147,17 +150,34 @@ class PlayBot(discord.Client):
             if len(cont.split(' ')) > 1:
                 try:
                     time_str = cont.split(' ')[1]
-                    hrs = int(time_str.split(':')[0])
-                    minutes = int(time_str.split(':')[1])
+                    time_split = time_str.split(':')
+                    days = 0
+                    hrs = int(time_split[0])
+                    minutes = int(time_split[1])
+                    if len(time_split) > 2:
+                        days = int(time_split[0])
+                        hrs = int(time_split[1])
+                        minutes = int(time_split[2])
                     now = datetime.now(tz=pytz.timezone(BOT_TIME_ZONE))
-                    now = now + timedelta(hours=hrs, minutes=minutes)
-
-                    embed_var = discord.Embed(title="Let's Play!", description=self.formated_prompt_str.format(hrs, minutes, self.threshold, self.reaction_str))
-                    embed_var.add_field(name='Pacific Time', value=(now.strftime("%I:%M %p") + " PT"))
+                    delta = timedelta(days=days, hours=hrs, minutes=minutes)
+                    now = now + delta
+                    delay_seconds = int(delta.total_seconds())
+                    if delay_seconds > MAX_EVENT_TIME:
+                        await message.channel.send("Sorry that's too far into the future!\n")
+                        return
+                    embed_var = discord.Embed(
+                        title="Let's Play!", 
+                        description=self.formated_prompt_str.format(
+                            delta.days, 
+                            int(delta.seconds / (60 * 60)),
+                            int(delta.seconds / 60) % 60,
+                            self.threshold, 
+                            self.reaction_str))
+                    embed_var.add_field(name='Pacific Time', value=now.strftime("%A\n%d/%m/%Y\n%I:%M %p"))
                     now = now.astimezone(tz=pytz.timezone('US/Eastern'))
-                    embed_var.add_field(name='Eastern Time', value=(now.strftime("%I:%M %p") + " ET"))
+                    embed_var.add_field(name='Eastern Time', value=now.strftime("%A\n%d/%m/%Y\n%I:%M %p"))
                     now = now.astimezone(tz=pytz.timezone('Europe/Madrid'))
-                    embed_var.add_field(name='Central European Time', value=(now.strftime("%I:%M %p") + " CET"))
+                    embed_var.add_field(name='Central European Time', value=now.strftime("%A\n%d/%m/%Y\n%I:%M %p"))
 
                     self.running_msgs.append(
                         ReactiveMessage(
@@ -166,14 +186,14 @@ class PlayBot(discord.Client):
                             self.reaction_str, 
                             self.formated_success_str.format(self.pinging), 
                             self.formated_failed_str, 
-                            int(timedelta(hours=hrs, minutes=minutes).total_seconds()), 
+                            delay_seconds, 
                             self.threshold
                         )
                     )
                 except Exception as e:
                     await message.channel.send(
                         "Sorry I couldn't understand that :(\n" +
-                        "The defualt format is `" + self.base_command + "HH:mm` and I will wait for HH hours and mm minutes")
+                        "The defualt format is `" + self.base_command + "H:m` or `" + self.base_command + "D:H:m` and I will wait for D days, H hours and m minutes")
             else:
                 await message.channel.send("<@" + str(message.author.id) + ">, there should be 2 arguments. EG: `!play 1:00` to play in 1hr")
         self.try_saving()
