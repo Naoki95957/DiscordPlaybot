@@ -38,12 +38,13 @@ class PlayBot(discord.Client):
 
     __bot_thread = None
 
-    def __init__(self, threading=False):
+    def __init__(self, threading=False, print_statements=False):
         super().__init__()
         load_dotenv()
         TOKEN = os.getenv('DISCORD_TOKEN')
         self.bot_id = os.getenv('BOT_ID')
         self.my_id = os.getenv('MY_ID')
+        self.print_statements = print_statements
         if threading:
             self.__bot_thread = Thread(target=self.__bot_init, kwargs={'token': TOKEN}).start()
         else:
@@ -358,7 +359,7 @@ class PlayBot(discord.Client):
 
 
 def main():
-    bot = PlayBot()
+    bot = PlayBot(print_statements=True)
     
 if __name__ == "__main__":
     main()
