@@ -59,15 +59,16 @@ class BotTerminal:
 
     def __terminal_loop(self):
         self.terminal_running = True
-        print("Terminal started")
+        print("Terminal started\n")
         while self.terminal_running:
-            print(">", end="")
+            print(">", end="", flush=True)
             line = sys.stdin.readline().rstrip()
             if line == 'exit':
                 self.terminal_running = False
             else:
                 argv = self.__handle_line(line)
                 self.__commands(argv)
+            print()
         print("Terminal closed")
         print("Joining bot thread and enabling print outs")
         self.bot.enable_print_statements(True)
