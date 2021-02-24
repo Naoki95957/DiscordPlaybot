@@ -1,2 +1,4 @@
 discord.py
 pytz
+dotenv
+python-dotenv

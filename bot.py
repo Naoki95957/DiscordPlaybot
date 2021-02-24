@@ -56,7 +56,7 @@ class PlayBot(discord.Client):
 
     def __bot_init(self, token: str):
         Thread(target=self.__save_loop).start()
-        self.run(token)
+        self.start(token)
 
     def join_bot_thread(self):
         if self.__bot_thread and isinstance(self.__bot_thread, Thread):
