@@ -352,3 +352,10 @@ class PlayBot(discord.Client):
 
     def __del__(self):
         self.try_saving()
+
+
+def main():
+    bot = PlayBot()
+    
+if __name__ == "__main__":
+    main()
