@@ -47,7 +47,6 @@ class ReactiveMessage:
             self.threshold = threshold
             self.passed = passed
             asyncio.get_event_loop().create_task(self.__start_from_builder(guilds))
-            asyncio.get_event_loop().create_task(self.__check_message_reactions())
         else:
             self.msg = msg
             self.success = success_msg
@@ -58,8 +57,9 @@ class ReactiveMessage:
             self.raw_msg = None
             self.threshold = threshold + 1
             self.passed = False
-
             asyncio.get_event_loop().create_task(self.__access_after())
+
+        asyncio.get_event_loop().create_task(self.__check_message_reactions())
 
     async def __start_from_builder(self, guilds: list):
         """
@@ -88,8 +88,7 @@ class ReactiveMessage:
             if reaction.emoji == self.reaction and reaction.count >= self.threshold:
                 await self.send_success_msg()
                 return
-        await msg.edit(embed=None, content=self.failed)
-        self.passed = True
+        await self.send_failed_msg()
     
     async def __check_message_reactions(self):
         """
@@ -97,13 +96,17 @@ class ReactiveMessage:
 
         This is because the 'on_reaction' no longer gets called if the bot is restarted
         """
+        failed = True
         while not self.passed:
             if isinstance(self.raw_msg, discord.message.Message):
-                msg = await self.channel.fetch_message(self.raw_msg.id)
-                for reaction in msg.reactions:
+                self.raw_msg = await self.channel.fetch_message(self.raw_msg.id)
+                for reaction in self.raw_msg.reactions:
                     if reaction.emoji == self.reaction and reaction.count >= self.threshold:
+                        failed = False
                         await self.send_success_msg()
             await asyncio.sleep(5)
+        if failed:
+            await self.send_failed_msg()
 
     async def __access_after(self):
         """
@@ -139,6 +142,13 @@ class ReactiveMessage:
             allowed_mentions=mentions,
             reference=self.raw_msg.to_reference())
         self.passed = True
+    
+    async def send_failed_msg(self):
+        """
+        Edits message to indicate time has passed
+        """
+        self.passed = True
+        await self.raw_msg.edit(embed=None, content=self.failed)
 
     def is_complete(self) -> bool:
         """
@@ -168,6 +178,9 @@ class ReactiveMessage:
             dict: representation of this class
         """
         dictionary = {}
+        if not self.raw_msg:
+            # message hasn't posted yet
+            return {}
         dictionary['msg_id'] = self.raw_msg.id
         dictionary['channel_id'] = self.raw_msg.channel.id
         dictionary['guild_id'] = self.raw_msg.guild.id
