@@ -333,6 +333,8 @@ class PlayBot(discord.Client):
                 self.reaction_str = dictionary['reaction_str']
                 self.pinging = dictionary['pinging']
                 self.running_msgs = [reactive_message_builder(rmsg_dict, self.guilds) for rmsg_dict in dictionary['running_msgs']]
+                self.save_time = dictionary['save_timer']
+                self.max_event_time = dictionary['max_event_time']
                 if self.print_statements:
                     print('File loaded')
                     pprint(dictionary)
@@ -361,8 +363,9 @@ class PlayBot(discord.Client):
         dictionary['base_command'] = copy.deepcopy(self.base_command)
         dictionary['reaction_str'] = copy.deepcopy(self.reaction_str)
         dictionary['pinging'] = copy.deepcopy(self.pinging)
-        rmsg_dicts = [rmsg.to_dictionary() for rmsg in self.running_msgs]
-        dictionary['running_msgs'] = copy.deepcopy(rmsg_dicts)
+        dictionary['running_msgs'] = copy.deepcopy([rmsg.to_dictionary() for rmsg in self.running_msgs])
+        dictionary['save_timer'] = copy.deepcopy(self.save_timer)
+        dictionary['max_event_time'] = copy.deepcopy(self.max_event_time)
         return dictionary
 
     def __save_loop(self):
