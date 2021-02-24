@@ -225,25 +225,25 @@ class PlayBot(discord.Client):
     async def help_command(self, message: discord.Message):
         desc = (
             self.base_command +
-            "ping [role id]\n"+
+            " ping [role id]\n"+
             "\tsets which role will be pinged\n\n"+
             self.base_command +
-            "count [integer]\n"+
+            " count [integer]\n"+
             "\tsets how many players will be needed to make a ping\n\n"+
             self.base_command +
-            "permit [role id]\n"+
+            " permit [role id]\n"+
             "\tsets which roles can control my settings\n\n"+
             self.base_command +
-            "remove [role id]\n"+
+            " remove [role id]\n"+
             "\tremoves which roles can control my settings\n\n"+
             self.base_command +
-            "reaction [emoji]\n"+
+            " reaction [emoji]\n"+
             "\tsets which emoji will used\n\n"+
             self.base_command +
-            "[d:h:m]\n"+
+            " [d:h:m]\n"+
             "\tschedules an event 'd:h:m' time from now and if enough players wanna join in, it'll ping! Formats are: `d:h:m`, `h:m`, and `m`\n\n"+
             self.base_command +
-            "help\n"+
+            " help\n"+
             "\tget the list of commands"
         )
         embed_var = discord.Embed(title="Commands", description=desc)
