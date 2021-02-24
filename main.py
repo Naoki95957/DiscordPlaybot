@@ -2,7 +2,7 @@ from bot import PlayBot
 from bot_terminal import BotTerminal    
 
 def main():
-    bot = PlayBot(threading=True, print_statements=False)
+    bot = PlayBot(print_statements=False)
     terminal = BotTerminal(bot).start()
     
 if __name__ == "__main__":

@@ -1,6 +1,7 @@
 from bot import PlayBot
 from message_manager import ReactiveMessage
 from pprint import pprint
+from threading import Thread
 import sys
 import re
 import pickle
@@ -42,10 +43,14 @@ class BotTerminal:
 
     def start(self):
         """
-        Begins terminal loop on main thread
+        Begins bot on main thread and starts terminal on another
 
-        'exit' will close it and join the bot thread w/ main
+        'exit' will close terminal thread
         """
+        Thread(target=self.__start_terminal_thread).start()
+        self.bot.initialize()
+    
+    def __start_terminal_thread(self):
         if not self.bot.print_statements_enabled():
             # Thread(target=self.__terminal_loop).start()
             self.__terminal_loop()
