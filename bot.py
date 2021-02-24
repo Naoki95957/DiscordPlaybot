@@ -38,13 +38,16 @@ class PlayBot(discord.Client):
 
     __bot_thread = None
 
-    def __init__(self):
+    def __init__(self, threading=False):
         super().__init__()
         load_dotenv()
         TOKEN = os.getenv('DISCORD_TOKEN')
         self.bot_id = os.getenv('BOT_ID')
         self.my_id = os.getenv('MY_ID')
-        self.__bot_thread = Thread(target=self.__bot_init, kwargs={'token': TOKEN}).start()
+        if threading:
+            self.__bot_thread = Thread(target=self.__bot_init, kwargs={'token': TOKEN}).start()
+        else:
+            self.__bot_init(TOKEN)
 
     def __bot_init(self, token: str):
         Thread(target=self.__save_loop).start()
