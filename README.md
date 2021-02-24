@@ -3,6 +3,8 @@ First attempt at a discord bot in python.
 
 Not very pretty, but functional and hopefully useful
 
+Bot's primariy control is via Discord but can be controlled with a back-door terminal
+
 You will need to set up .env file:
 ```
 DISCORD_TOKEN=secret_token
