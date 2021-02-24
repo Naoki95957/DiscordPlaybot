@@ -6,6 +6,7 @@ import pickle
 import copy
 import pytz
 import time
+import re
 from threading import Thread
 from message_manager import ReactiveMessage, reactive_message_builder, BOT_TIME_ZONE
 from dotenv import load_dotenv
@@ -16,6 +17,8 @@ class PlayBot(discord.Client):
 
     bot_id = 1234567890
     my_id = 1234567890
+
+    str_pattern = "\'.*?\'|\".*?\"|\(.*?\)|[a-zA-Z\d\_\*\-\\\+\/\[\]\?\!\@\#\$\%\&\=\~\`]+"
     
     # day * hours * minutes * seconds
     max_event_time = 14 * 24 * 60 * 60 # 604800s
@@ -41,6 +44,7 @@ class PlayBot(discord.Client):
     def __init__(self, threading=False, print_statements=False):
         super().__init__()
         load_dotenv()
+        self.pattern = re.compile(self.str_pattern)
         TOKEN = os.getenv('DISCORD_TOKEN')
         self.bot_id = os.getenv('BOT_ID')
         self.my_id = os.getenv('MY_ID')
@@ -104,21 +108,26 @@ class PlayBot(discord.Client):
         # Here begins a giant ugly list of command checking
         if message.author.id == self.bot_id or self.base_command not in cont:
             return
-        if cont.startswith(self.base_command + " help"):
-            await self.help_command(message)
-        elif cont.startswith(self.base_command + " ping "):
-            await self.set_ping_command(message)
-        elif cont.startswith(self.base_command + " permit "):
-            await self.set_permit_command(message)
-        elif cont.startswith(self.base_command + " remove "):
-            await self.remove_permit_command(message)
-        elif cont.startswith(self.base_command + " count "):
-            await self.set_threshold_command(message)
-        elif cont.startswith(self.base_command + " reaction "):
-            await self.set_reaction_command(message)
-        elif cont.startswith(self.base_command):
-            # This is the main command -> 'd:h:m'
-            await self.create_reactive_message_command(message)
+        try:
+            argv = self.tokenize(message.content)
+            if argv[0] == self.base_command:
+                if argv[1] == 'help':
+                    await self.help_command(message)
+                elif argv[1] == 'ping':
+                    await self.set_ping_command(message)
+                elif argv[1] == 'permit':
+                    await self.set_permit_command(message)
+                elif argv[1] == 'remove':
+                    await self.remove_permit_command(message)
+                elif argv[1] == 'count':
+                    await self.set_threshold_command(message)
+                elif argv[1] == 'reaction':
+                    await self.set_reaction_command(message)
+                elif cont.startswith(self.base_command):
+                    # This is the main command -> 'd:h:m'
+                    await self.create_reactive_message_command(message)
+        except Exception as e:
+            pass
         self.try_saving()
 
     async def create_reactive_message_command(self, message: discord.Message):
@@ -180,7 +189,7 @@ class PlayBot(discord.Client):
         cont = str(message.content)
         if message.author.top_role.id in self.permitted_roles:
             try:
-                temp = cont.replace(self.base_command + 'reaction ', '')
+                temp = cont.replace(self.base_command + ' reaction ', '')
                 await message.add_reaction(temp)
                 self.reaction_str = temp
             except Exception as e:
@@ -192,7 +201,7 @@ class PlayBot(discord.Client):
         cont = str(message.content)
         if message.author.top_role.id in self.permitted_roles:
             try:
-                self.threshold = int(cont.replace(self.base_command + 'count ', ''))
+                self.threshold = int(cont.replace(self.base_command + ' count ', ''))
                 await message.channel.send("I will ping when I see " + str(self.threshold) + " or more players moving forward :)")
             except Exception as e:
                 await message.channel.send("Sorry I couldn't understand that :(")
@@ -203,7 +212,7 @@ class PlayBot(discord.Client):
         cont = str(message.content)
         if message.author.top_role.id in self.permitted_roles:
             try:
-                role_id = int(cont.replace(self.base_command + 'remove ', ''))
+                role_id = int(cont.replace(self.base_command + ' remove ', ''))
                 self.permitted_roles.pop(self.permitted_roles.index(role_id))
                 await message.channel.send("I will no longer listen to the " + self.get_role(role_id).name +" role")
             except Exception as e:
@@ -215,7 +224,7 @@ class PlayBot(discord.Client):
         cont = str(message.content)
         if (not self.permitted_roles) or message.author.top_role.id in self.permitted_roles or message.author.id == int(self.my_id):
             try:
-                role_id = int(cont.replace(self.base_command + 'permit ', ''))
+                role_id = int(cont.replace(self.base_command + ' permit ', ''))
                 self.permitted_roles.append(role_id)
                 await message.channel.send("I will listen to the " + self.get_role(role_id).name +" role when they command me to :)")
             except Exception as e:
@@ -254,7 +263,7 @@ class PlayBot(discord.Client):
         cont = str(message.content)
         if message.author.top_role.id in self.permitted_roles:
             try:
-                self.pinging = int(cont.replace(self.base_command + 'ping ', ''))
+                self.pinging = int(cont.replace(self.base_command + ' ping ', ''))
                 name = "them"
                 role = self.get_role(self.pinging)
                 if role:
@@ -288,6 +297,28 @@ class PlayBot(discord.Client):
             await message.channel.send("Sorry, you do not have permission <@" + str(message.author.id) + ">")
         else:
             await message.channel.send("Permissions must be set first! <@" + str(message.author.id) + ">")
+
+    def tokenize(self, line: str):
+        """
+        Helper that tokenizes line into an argument vector
+
+        Args:
+            line (str): a command straight off the command line
+
+        Returns:
+            argv [list]: Contains each seperate word
+        """
+        if not self.pattern:
+            self.pattern = re.compile(self.str_pattern)
+        argv = []
+        none_matched = True
+        for match in re.finditer(self.pattern, line):
+            if none_matched:
+                none_matched = False
+            argv.append(match.group(0).rstrip())
+        if none_matched:
+            argv.append(line)
+        return argv
 
     def try_loading(self):
         """
