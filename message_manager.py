@@ -136,19 +136,22 @@ class ReactiveMessage:
         """
         Sends a 'ping' message
         """
-        mentions = discord.AllowedMentions(users=True, roles=True, replied_user=True)
-        await self.raw_msg.channel.send(
-            content=self.success,
-            allowed_mentions=mentions,
-            reference=self.raw_msg.to_reference())
-        self.passed = True
+        
+        if not self.passed:
+            mentions = discord.AllowedMentions(users=True, roles=True, replied_user=True)
+            await self.raw_msg.channel.send(
+                content=self.success,
+                allowed_mentions=mentions,
+                reference=self.raw_msg.to_reference())
+            self.passed = True
     
     async def send_failed_msg(self):
         """
         Edits message to indicate time has passed
         """
-        self.passed = True
-        await self.raw_msg.edit(embed=None, content=self.failed)
+        if not self.passed:
+            self.passed = True
+            await self.raw_msg.edit(embed=None, content=self.failed)
 
     def is_complete(self) -> bool:
         """
