@@ -388,7 +388,8 @@ class PlayBot(discord.Client):
 
 
 def main():
-    bot = PlayBot(print_statements=True)
+    # bot = PlayBot(print_statements=True)
+    print('please run the bot from main.py')
     
 if __name__ == "__main__":
     main()
